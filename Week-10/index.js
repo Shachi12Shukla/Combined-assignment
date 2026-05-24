@@ -213,25 +213,16 @@ app.put("/api/items/:id", Authmiddleware , async (req,res)=> {
     const itemId = req.params.id;
 
     const item = await itemModel.findById(itemId);
-    console.log(item);  // null
     if(!item){
         res.status(404).send("no item with this id exists");
         return;
     };
 
     const user = await userModel.findById(userId);
-    console.log(user.householdId);
-    console.log(item.householdId);
-    if(user.householdId.toString() !== item.householdId.toString()){
+    if(!item.householdId.equals(user.householdId)){
         res.status(403).send("You don't  have access to update this item");
         return;
     };
-
-    // const Oldname = req.body.Oldname;
-    // const Oldcategory = req.body.Oldcategory;
-    // const Oldquantity = req.body.Oldquantity;
-    // const OldexpiryDate = req.body.OldexpiryDate;
-    // const Oldstatus = req.body.Oldstatus;
 
     const Newname = req.body.Newname;
     const Newcategory = req.body.Newcategory;
