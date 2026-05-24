@@ -222,7 +222,7 @@ app.put("/api/items/:id", Authmiddleware , async (req,res)=> {
     const user = await userModel.findById(userId);
     console.log(user.householdId);
     console.log(item.householdId);
-    if(user.householdId !== item.householdId){
+    if(user.householdId.toString() !== item.householdId.toString()){
         res.status(403).send("You don't  have access to update this item");
         return;
     };
@@ -256,6 +256,7 @@ app.patch("/api/items/:id/status", Authmiddleware , async (req,res) => {
     const itemId = req.params.id;
 
     const item = await itemModel.findById(itemId);
+   
     if(!item){
         res.status(404).send("no item with this id exists");
         return;
@@ -263,15 +264,12 @@ app.patch("/api/items/:id/status", Authmiddleware , async (req,res) => {
 
     const user = await userModel.findById(userId);
 
-    console.log(user.householdId);
-    console.log(item.householdId);
-
-    if(user.householdId != item.householdId){
+    if(!item.householdId.equals(user.householdId)){
         res.status(403).send("You don't  have access to update this item");
         return;
     };
 
-    const status = req.body.status;
+    const status = req.query.status;
 
     item.status = status;
     await item.save();
