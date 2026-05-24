@@ -184,7 +184,7 @@ app.post("/api/items", Authmiddleware, async (req,res)=> {
 
     const user = await userModel.findById(userId)
 
-    if(user.householdId !== householdId){
+    if(!user.householdId.equals(householdId)){
         res.status(403).send("You can't add items because you do not have access of this household");
         return;
     };
@@ -280,12 +280,12 @@ app.delete("/api/items/:id", Authmiddleware , async (req,res)=> {
     };
 
     const user = await userModel.findById(userId);
-    if(user.householdId != item.householdId){
+    if(!user.householdId.equals(item.householdId)){
         res.status(403).send("You don't  have access to delete this item");
         return;
     };
 
-    const deletedItem = await itemModel.delete(item);
+    const deletedItem = await itemModel.deleteOne({_id: itemId});
     res.status(200).send("Item deleted!");
 
 });
