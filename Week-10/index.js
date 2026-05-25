@@ -7,6 +7,7 @@ const {Authmiddleware} = require('./Authmiddleware');
 const jwt = require('jsonwebtoken');
 const {userModel, householdModel, itemModel} = require('./model');
 const mongoose = require("mongoose");
+const { accessMiddleware } = require("./access");
 
 
 app.listen(3000 , ()=> console.log("backend server started"));
@@ -205,24 +206,8 @@ app.post("/api/items", Authmiddleware, async (req,res)=> {
 
 });
 
-// middleware needed - put, patch, and delete
-// checks for access of household/item
-app.put("/api/items/:id", Authmiddleware , async (req,res)=> {
 
-    const userId = req.userId;
-    const itemId = req.params.id;
-
-    const item = await itemModel.findById(itemId);
-    if(!item){
-        res.status(404).send("no item with this id exists");
-        return;
-    };
-
-    const user = await userModel.findById(userId);
-    if(!item.householdId.equals(user.householdId)){
-        res.status(403).send("You don't  have access to update this item");
-        return;
-    };
+app.put("/api/items/:id", Authmiddleware , accessMiddleware , async (req,res)=> {
 
     const Newname = req.body.Newname;
     const Newcategory = req.body.Newcategory;
@@ -230,7 +215,8 @@ app.put("/api/items/:id", Authmiddleware , async (req,res)=> {
     const NewexpiryDate = req.body.NewexpiryDate;
     const Newstatus = req.body.Newstatus;
 
-    
+    const item = req.item;
+
     item.name = Newname;
     item.category = Newcategory;
     item.quantity = Newquantity;
@@ -242,25 +228,10 @@ app.put("/api/items/:id", Authmiddleware , async (req,res)=> {
 
 });
 
-app.patch("/api/items/:id/status", Authmiddleware , async (req,res) => {
-    const userId = req.userId;
-    const itemId = req.params.id;
-
-    const item = await itemModel.findById(itemId);
-   
-    if(!item){
-        res.status(404).send("no item with this id exists");
-        return;
-    };
-
-    const user = await userModel.findById(userId);
-
-    if(!item.householdId.equals(user.householdId)){
-        res.status(403).send("You don't  have access to update this item");
-        return;
-    };
+app.patch("/api/items/:id/status", Authmiddleware , accessMiddleware , async (req,res) => {
 
     const status = req.query.status;
+    const item = req.item;
 
     item.status = status;
     await item.save();
@@ -269,21 +240,8 @@ app.patch("/api/items/:id/status", Authmiddleware , async (req,res) => {
     
 });
 
-app.delete("/api/items/:id", Authmiddleware , async (req,res)=> {
-    const userId = req.userId;
-    const itemId = req.params.id;
-
-    const item = await itemModel.findById(itemId);
-    if(!item){
-        res.status(404).send("no item with this id exists");
-        return;
-    };
-
-    const user = await userModel.findById(userId);
-    if(!user.householdId.equals(item.householdId)){
-        res.status(403).send("You don't  have access to delete this item");
-        return;
-    };
+app.delete("/api/items/:id", Authmiddleware , accessMiddleware , async (req,res)=> {
+    const itemId = req.itemId;
 
     const deletedItem = await itemModel.deleteOne({_id: itemId});
     res.status(200).send("Item deleted!");
