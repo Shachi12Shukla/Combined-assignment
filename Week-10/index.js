@@ -294,6 +294,36 @@ app.delete("/api/items/:id", Authmiddleware , async (req,res)=> {
 // Dashboard
 app.get("/api/dashboard/stats", Authmiddleware , async (req,res)=> {
     const userId = req.userId;
+    const householdId = req.query.householdId;
+
+    const household = await householdModel.findById(householdId);
+    if(!household){
+        res.status(404).send("No household found with given ID");
+        return;
+    };
+
+    const user = await userModel.findById(userId);
+    if(!user.householdId.equals(householdId)){
+        res.status(403).send("You can't view stats because you do not have access of this household");
+        return;
+    };
+
+    const items = await itemModel.find({householdId: householdId});
+    if(!items){
+        res.status(404).send("No item found!");
+        return;
+    };
+    
+    let wasteScore = 0;
+    for(const item of items){
+        if(item.status === 'expired' || item.status === 'used'){
+            wasteScore++;
+        };
+    }
+    household.wasteScore = wasteScore;
+    await household.save();
+
+    res.status(200).json({wasteScore: wasteScore});
 });
 
 app.get("/api/dashboard/expiring", Authmiddleware , async (req,res)=> {
