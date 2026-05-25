@@ -326,8 +326,28 @@ app.get("/api/dashboard/stats", Authmiddleware , async (req,res)=> {
     res.status(200).json({wasteScore: wasteScore});
 });
 
+// items expiring in 24 hours
 app.get("/api/dashboard/expiring", Authmiddleware , async (req,res)=> {
     const userId = req.userId;
+    const user = await userModel.findById(userId);
+    const householdId = user.householdId;
+    if (!householdId) {
+        return res.status(404).send("You don't own any household");
+    }
+
+    // Find items expiring in the next 24 hours
+    const now = new Date();
+    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+    const expiringItems = await itemModel.find({
+        householdId: householdId,
+        expiryDate: { $gte: now, $lte: next24h },
+        status: { $in: ["fresh", "expiring-soon"] }
+    });
+
+    res.status(200).json({
+        expiringItems: expiringItems
+    });
 });
 
 
